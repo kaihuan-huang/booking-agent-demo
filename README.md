@@ -7,6 +7,7 @@ A bilingual (English / 中文) restaurant booking agent that never books until t
 - **Rules, not a model, read the booking:** date, time, party size and name. Anything unclear ("at 7") becomes a question.
 - **One action, `create_reservation`,** runs only after a bare, explicit yes; "ok" or "好" asks again. The result is *pending* until the restaurant confirms.
 - **Compare with an LLM on your machine:** with [Ollama](https://ollama.com) running, the page asks your local model to read the same conversation and marks where it guessed.
+- **Architecture card:** [model-architecture.html](https://kaihuan-huang.github.io/booking-agent-demo/model-architecture.html) shows what is inside Qwen2.5-7B-Instruct (28 layers, GQA 28:4, 14.2 GiB bf16, 56 KiB KV per token), built from the config on torch's meta device without downloading weights.
 - **Tests:** 31 synthetic conversations run in the browser with a fixed clock.
 
 On Nalu itself, a model-only pilot got 17 of 30 messages fully right (57%) with invented values; rules plus the confirmation gate got 33 of 39 held-out messages right (85%) with 0 wrong or invented values.

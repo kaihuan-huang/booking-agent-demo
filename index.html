@@ -191,6 +191,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-si
   <section aria-labelledby="llm">
     <h2 id="llm">Compare with an LLM on your machine</h2>
     <p>The first version let a language model read the booking details. Measured, it filled in values the guest never gave, so the model came out of the booking path. If you run <a href="https://ollama.com">Ollama</a>, this page can ask your local model to read the same conversation and show where it would have guessed. Nothing leaves your computer.</p>
+    <p>What is inside that model: <a href="model-architecture.html">architecture card for Qwen2.5-7B-Instruct</a>. 7.62B parameters over 28 layers, grouped-query attention (28 heads, 4 KV heads), 14.2 GiB of weights in bf16 and 56 KiB of KV cache per token, so 32K tokens of context cost 1.75 GiB and the GPU budget goes to weights, not conversation history. Generated from the config alone, no weights downloaded.</p>
     <pre><span class="muted"># once, then restart Ollama</span>
 ollama pull qwen2.5:7b
 OLLAMA_ORIGINS="https://kaihuan-huang.github.io" ollama serve</pre>
@@ -216,7 +217,7 @@ OLLAMA_ORIGINS="https://kaihuan-huang.github.io" ollama serve</pre>
   </section>
 
   <footer>
-    <a href="https://kaihuan-huang.github.io/refund-agent-demo/">Refund Agent</a> · <a href="https://kaihuan-huang.github.io/pii-detector-demo/">PII Detector Demo</a> · <a href="https://kaihuan-huang.github.io/ledger-demo/">Tamper-Evident Ledger</a> · <a href="https://github.com/kaihuan-huang">GitHub</a> · <a href="https://linkedin.com/in/kaihuanhuang/">LinkedIn</a>
+    <a href="https://kaihuan-huang.github.io/refund-agent-demo/">Refund Agent</a> · <a href="https://kaihuan-huang.github.io/pii-detector-demo/">PII Detector Demo</a> · <a href="https://kaihuan-huang.github.io/ledger-demo/">Tamper-Evident Ledger</a> · <a href="https://kaihuan-huang.github.io/llm-arch-viz/">LLM Architecture Cards</a> · <a href="https://github.com/kaihuan-huang">GitHub</a> · <a href="https://linkedin.com/in/kaihuanhuang/">LinkedIn</a>
   </footer>
 </main>
 
