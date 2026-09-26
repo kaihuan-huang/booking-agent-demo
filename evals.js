@@ -28,6 +28,14 @@
     { id: "zh-status-before-booking", turns: ["订好了吗？"], expect: { tools: 0, replyHas: "还没有" } },
     { id: "dinner-means-pm", turns: ["Friday dinner at 7 for 5, name's Taylor"], expect: { party: 5, date: "2026-09-25", time: "19:00", name: "Taylor" } },
     { id: "zh-month-day", turns: ["10月3号 晚上六点 四位 张女士"], expect: { party: 4, date: "2026-10-03", time: "18:00", name: "张女士" } },
+    { id: "vague-ok-is-not-yes", turns: ["Table for 4 tomorrow at 7pm, name is Jordan Lee", "ok"], expect: { tools: 0, awaitingConfirm: true, replyHas: "reply yes" } },
+    { id: "zh-vague-hao-is-not-yes", turns: ["明天晚上7点，4位，我叫王伟", "好"], expect: { tools: 0, awaitingConfirm: true } },
+    { id: "question-is-not-yes", turns: ["Table for 4 tomorrow at 7pm, name is Jordan Lee", "yes?"], expect: { tools: 0 } },
+    { id: "yes-please-books", turns: ["Table for 4 tomorrow at 7pm, name is Jordan Lee", "yes please"], expect: { tools: 1 } },
+    { id: "sounds-good-books", turns: ["Table for 4 tomorrow at 7pm, name is Jordan Lee", "sounds good"], expect: { tools: 1 } },
+    { id: "zh-haode-books", turns: ["明天晚上7点，4位，我叫王伟", "好的"], expect: { tools: 1 } },
+    { id: "pending-not-confirmed", turns: ["Table for 4 tomorrow at 7pm, name is Jordan Lee", "yes"], expect: { tools: 1, replyHas: "pending" } },
+    { id: "no-with-change-is-a-change", turns: ["Table for 4 tomorrow at 7pm, name is Jordan Lee", "no, make it 6 people"], expect: { party: 6, awaitingConfirm: true, tools: 0 } },
     { id: "earlier-today-rejected", turns: ["Table for 2 today at 9am, I'm Robin"], expect: { time: null, tools: 0, replyHas: "already passed" } },
   ];
 

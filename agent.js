@@ -143,7 +143,21 @@
   }
 
   // ---- intents ----
-  const isYes = (t) => /^\s*(yes|y|yeah|yep|confirm|confirmed|ok(ay)?|sure|book it|是|是的|好|好的|确认|对|可以)\s*[.!。！]*\s*$/i.test(t);
+  // Only a bare, explicit yes books. "ok", "sure", "好", "嗯" are too vague: the agent asks again.
+  const CONFIRM_WORDS = new Set(["yes", "y", "yep", "yeah", "confirm", "confirmed", "correct", "right"]);
+  const FILLER_WORDS = new Set(["please", "it", "that", "is", "book", "do", "go", "ahead", "thanks", "thank", "you", "i", "sounds", "good", "looks", "great", "perfect", "all", "the", "this"]);
+  const CONFIRM_PHRASES = new Set(["book it", "do it", "please book", "please book it", "go ahead", "sounds good", "looks good"]);
+  const ZH_CONFIRM = new Set(["是", "是的", "对", "对的", "确认", "好的", "没错", "没问题", "可以", "行", "确认预订", "请确认"]);
+  function isYes(t) {
+    if (/[?？]/.test(t)) return false;
+    const s = t.trim().replace(/[.!。！,，~]+$/g, "").trim();
+    if (ZH_CONFIRM.has(s)) return true;
+    const words = s.toLowerCase().split(/[\s,]+/).filter(Boolean);
+    if (!words.length) return false;
+    if (CONFIRM_PHRASES.has(words.join(" "))) return true;
+    return words.some((w) => CONFIRM_WORDS.has(w)) && words.every((w) => CONFIRM_WORDS.has(w) || FILLER_WORDS.has(w));
+  }
+  const isVague = (t) => /^\s*(ok|okay|k|sure|fine|alright|好|嗯|嗯嗯|哦|好吧)\s*[.!。！]*\s*$/i.test(t);
   const isNo = (t) => /^\s*(no|n|nope|cancel|don't|do not|不|不是|不对|不用|取消)\b/i.test(t) || /^\s*(不|不是|不对|不用|取消)/.test(t);
   const asksContact = (t) => /\b(e-?mail|send (me )?(a |the )?confirmation|text me|call me)\b/i.test(t) || /(邮件|邮箱|发.{0,4}确认|短信|打电话给我)/.test(t);
   const asksStatus = (t) => /\b(status|did (it|my booking|that) go through|is (it|my (booking|reservation)) (confirmed|booked))\b/i.test(t) || /(订上了吗|订好了吗|预订成功了吗|成功了吗)/.test(t);
@@ -175,12 +189,13 @@
       pastTime: "That time has already passed. What time would you like?",
       bigParty: `I can book up to ${MAX_PARTY} people here. How many will there be?`,
       summary: (f) => `Table for ${f.party} on ${fmtDate(f.date, "en")} at ${fmtTime(f.time, "en")}, under ${f.name}. Reply YES to book it.`,
-      booked: (c) => `Booked. Your confirmation number is ${c}.`,
+      booked: (c) => `Request sent, reference ${c}. It stays pending until the restaurant confirms it.`,
+      explicit: "To book, please reply YES. Or tell me what to change.",
       nothing: "There's nothing to confirm yet.",
       cancelled: "No problem, nothing was booked. What would you like to change?",
-      contact: "I can't send emails, texts or calls from this chat. Your confirmation number appears here once the booking is made.",
+      contact: "I can't send emails, texts or calls from this chat. Your booking reference appears here once the request is sent.",
       statusNone: "There's no booking yet in this chat.",
-      statusDone: (c) => `Your latest booking is confirmed: ${c}.`,
+      statusDone: (c) => `Your latest request, ${c}, is pending until the restaurant confirms it.`,
     },
     zh: {
       party: "人数", date: "日期", time: "时间", name: "预订人姓名",
@@ -190,12 +205,13 @@
       pastTime: "这个时间已经过了，请问想订几点？",
       bigParty: `这里最多可以订 ${MAX_PARTY} 位，请问一共几位？`,
       summary: (f) => `为 ${f.name} 预订 ${fmtDate(f.date, "zh")} ${fmtTime(f.time, "zh")}，${f.party} 位。回复“确认”即可预订。`,
-      booked: (c) => `已预订，确认号 ${c}。`,
+      booked: (c) => `已提交预订，编号 ${c}。餐厅确认之前为待确认状态。`,
+      explicit: "如需预订，请回复“确认”；也可以告诉我要改哪一项。",
       nothing: "目前还没有需要确认的预订。",
       cancelled: "好的，没有预订。请问要改哪一项？",
-      contact: "这个对话里无法发邮件、短信或打电话。预订完成后，确认号会显示在这里。",
+      contact: "这个对话里无法发邮件、短信或打电话。提交预订后，预订编号会显示在这里。",
       statusNone: "这个对话里还没有预订。",
-      statusDone: (c) => `最近一笔预订已确认：${c}。`,
+      statusDone: (c) => `最近一笔预订 ${c} 正在等待餐厅确认。`,
     },
   };
 
@@ -219,14 +235,17 @@
         say(t.pastTime); return out;
       }
       const confirmation = `R-${1001 + state.bookings.length}`;
-      const call = { name: "create_reservation", args: { party_size: f.party, date: f.date, time: f.time, name: f.name }, result: { confirmation } };
+      const call = { name: "create_reservation", args: { party_size: f.party, date: f.date, time: f.time, name: f.name }, result: { confirmation, status: "pending" } };
       out.toolCalls.push(call);
       state.bookings.push(confirmation);
       Object.assign(state, { fields: initialState().fields, rejected: {}, ambiguousTime: null, awaitingConfirm: false });
       say(t.booked(confirmation)); return out;
     }
     if (isYes(text)) { say(t.nothing); return out; }
-    if (state.awaitingConfirm && isNo(text)) { state.awaitingConfirm = false; say(t.cancelled); return out; }
+    if (state.awaitingConfirm && isVague(text)) { say(t.explicit); return out; }
+    // "no, make it 6" is a change, not a cancel: only a refusal with no new details cancels.
+    const carriesDetails = Object.values(resolveAll(text, now)).some(Boolean);
+    if (state.awaitingConfirm && isNo(text) && !carriesDetails) { state.awaitingConfirm = false; say(t.cancelled); return out; }
     if (asksStatus(text)) { say(state.bookings.length ? t.statusDone(state.bookings[state.bookings.length - 1]) : t.statusNone); return out; }
 
     const r = resolveAll(text, now);

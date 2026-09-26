@@ -71,6 +71,24 @@ td.src{color:var(--muted);font-size:.8rem}
 .tbl{overflow-x:auto}
 .nums td:first-child{width:38%;color:var(--ink-2)}
 .status{font-size:.88rem;color:var(--muted);margin-top:8px}
+h3.sub{margin-top:26px}
+.diagram{margin:18px 0 22px;overflow-x:auto}
+.diagram svg{display:block;width:100%;min-width:760px;height:auto;color:var(--ink);font-family:var(--sans)}
+.diagram .zone{fill:var(--me);opacity:.55}
+.diagram .zl{fill:var(--me-ink);font-size:12px;font-weight:600;letter-spacing:.04em}
+.diagram .ol{fill:var(--muted);font-size:12px;font-weight:600;letter-spacing:.04em}
+.diagram .bx rect{fill:var(--bg);stroke:currentColor;stroke-width:1.2}
+.diagram .t{fill:currentColor;font-size:13px;font-weight:600}
+.diagram .s{fill:var(--muted);font-size:11.5px}
+.diagram .e line{stroke:currentColor;stroke-width:1.2}
+figcaption{font-size:.85rem;color:var(--muted);margin-top:8px}
+figure{margin:0}
+.dec article{border-top:1px solid var(--line);padding:14px 0 4px}
+.dec h3{text-transform:none;letter-spacing:0;font-size:1rem;color:var(--ink);margin:0 0 6px}
+.dec dl{display:grid;grid-template-columns:84px minmax(0,1fr);gap:4px 12px;margin:0}
+.dec dt{color:var(--muted);font-size:.82rem;padding-top:2px}
+.dec dd{margin:0;font-size:.95rem}
+@media (max-width:560px){.dec dl{grid-template-columns:minmax(0,1fr)}}
 footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-size:.85rem;color:var(--muted)}
 </style>
 </head>
@@ -79,7 +97,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-si
   <header>
     <h1>Booking Agent Demo</h1>
     <p class="dek">A bilingual (English / 中文) restaurant booking agent that never books until the guest says yes, and never fills in a value the guest didn't give.</p>
-    <div class="meta"><span>Kaihuan Huang</span><span class="badge">Independent reimplementation · all data is synthetic</span></div>
+    <div class="meta"><span>Kaihuan Huang</span><span>Based on Nalu, the guest assistant I rebuilt at <a href="https://ipot.food/">IPOT</a></span><span class="badge">Independent reimplementation · all data is synthetic</span></div>
   </header>
 
   <section aria-labelledby="try">
@@ -109,6 +127,67 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-si
     </div>
   </section>
 
+  <section aria-labelledby="design">
+    <h2 id="design">How Nalu is built</h2>
+    <p>Nalu answers guests in English and Chinese and takes table bookings for a restaurant group. The booking path makes no model call at all; the model only handles what's left, and it can never write a booking field.</p>
+    <figure class="diagram">
+      <svg viewBox="0 0 960 290" role="img" aria-label="Booking path: guest message, rules and validators, draft state machine, slot check, summary and explicit yes, create_reservation as pending. Outside it: fixed FAQ answers, local LLM for classification and answers, fixed templates, and an event log with field names only.">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+        <rect class="zone" x="0" y="0" width="960" height="140" rx="8"/>
+        <text class="zl" x="16" y="24">BOOKING PATH · NO MODEL CALL</text>
+        <g class="bx">
+          <rect x="16" y="40" width="128" height="76" rx="6"/><text class="t" x="80" y="70" text-anchor="middle">Guest message</text><text class="s" x="80" y="90" text-anchor="middle">English or 中文</text>
+          <rect x="172" y="40" width="140" height="76" rx="6"/><text class="t" x="242" y="64" text-anchor="middle">Rules + validators</text><text class="s" x="242" y="84" text-anchor="middle">date, time, party,</text><text class="s" x="242" y="100" text-anchor="middle">name, phone, email</text>
+          <rect x="340" y="40" width="128" height="76" rx="6"/><text class="t" x="404" y="70" text-anchor="middle">Draft</text><text class="s" x="404" y="90" text-anchor="middle">pure state machine</text>
+          <rect x="496" y="40" width="132" height="76" rx="6"/><text class="t" x="562" y="64" text-anchor="middle">Slot check</text><text class="s" x="562" y="84" text-anchor="middle">time is listed</text><text class="s" x="562" y="100" text-anchor="middle">and not full</text>
+          <rect x="656" y="40" width="132" height="76" rx="6"/><text class="t" x="722" y="64" text-anchor="middle">Summary</text><text class="s" x="722" y="84" text-anchor="middle">bare, explicit yes</text><text class="s" x="722" y="100" text-anchor="middle">"ok" / "好" asks again</text>
+          <rect x="816" y="40" width="128" height="76" rx="6"/><text class="t" x="880" y="64" text-anchor="middle">Create</text><text class="s" x="880" y="84" text-anchor="middle">pending, with an</text><text class="s" x="880" y="100" text-anchor="middle">idempotency key</text>
+        </g>
+        <g class="e"><line x1="146" y1="78" x2="168" y2="78" marker-end="url(#ah)"/><line x1="314" y1="78" x2="336" y2="78" marker-end="url(#ah)"/><line x1="470" y1="78" x2="492" y2="78" marker-end="url(#ah)"/><line x1="630" y1="78" x2="652" y2="78" marker-end="url(#ah)"/><line x1="790" y1="78" x2="812" y2="78" marker-end="url(#ah)"/></g>
+        <text class="ol" x="16" y="172">EVERYTHING ELSE</text>
+        <g class="bx">
+          <rect x="16" y="188" width="206" height="76" rx="6"/><text class="t" x="119" y="216" text-anchor="middle">FAQ answers</text><text class="s" x="119" y="236" text-anchor="middle">owner-provided fixed text</text>
+          <rect x="240" y="188" width="252" height="76" rx="6"/><text class="t" x="366" y="212" text-anchor="middle">Local LLM (qwen2.5:7b)</text><text class="s" x="366" y="232" text-anchor="middle">classifies and answers; sees only</text><text class="s" x="366" y="248" text-anchor="middle">the last 30 minutes of chat</text>
+          <rect x="510" y="188" width="226" height="76" rx="6"/><text class="t" x="623" y="212" text-anchor="middle">Fixed templates</text><text class="s" x="623" y="232" text-anchor="middle">status, phone, handoff:</text><text class="s" x="623" y="248" text-anchor="middle">nothing it can't do</text>
+          <rect x="754" y="188" width="190" height="76" rx="6"/><text class="t" x="849" y="212" text-anchor="middle">Event log</text><text class="s" x="849" y="232" text-anchor="middle">one row per turn,</text><text class="s" x="849" y="248" text-anchor="middle">field names, no values</text>
+        </g>
+      </svg>
+      <figcaption>Answers are grounded read-only on the POS API; bookings go through the Reservation API. The reply says "confirmed" only when the Reservation API returns confirmed; otherwise it says the request is pending.</figcaption>
+    </figure>
+
+    <div class="dec">
+      <article><h3>No model in the booking path</h3><dl>
+        <dt>Because</dt><dd>A pilot with the model reading bookings got 17 of 30 messages fully right (57%) and invented values: <code>lisa@example.com</code> became the name "Lisa", "what time do you close?" became the time "close", "I want to book…" became the name "I".</dd>
+        <dt>Bonus</dt><dd>The model runs on a local GPU that serves one request at a time (about 3 s each), so every call skipped saves 1–3 s per turn. The cheapest call is the one you don't make.</dd>
+      </dl></article>
+      <article><h3>Own date and time resolvers</h3><dl>
+        <dt>Because</dt><dd>A standard date-parsing library returned nothing for 4 of 12 test date phrases and for every time phrase. Dates resolve in the restaurant's time zone, not the server's.</dd>
+      </dl></article>
+      <article><h3>Only a bare, explicit yes books</h3><dl>
+        <dt>Because</dt><dd>"ok", "sure", "好" and "嗯" are too vague for an action that holds a table. A negative word inside a question ("wait, what time do you close?") is not a cancel either.</dd>
+      </dl></article>
+      <article><h3>Never claim what isn't true</h3><dl>
+        <dt>Because</dt><dd>A real browser session showed the model promising "I will send a confirmation email" three hours after the booking draft had expired. The fix: the model sees only the last 30 minutes, status and contact replies became fixed templates, and "confirmed" is said only when the Reservation API says so.</dd>
+      </dl></article>
+      <article><h3>Behind a flag, default off</h3><dl>
+        <dt>Because</dt><dd>The old flow had over a hundred tests and a safety fix depending on it. The new flow shipped beside it; turning the flag off rolls back in about a minute.</dd>
+      </dl></article>
+      <article><h3>Keep personal data short-lived</h3><dl>
+        <dt>Because</dt><dd>Booking drafts hold phone numbers and emails, so expired drafts are purged on every save, and logs record which fields were found, never their values.</dd>
+      </dl></article>
+    </div>
+
+    <h3 class="sub">Measured on Nalu</h3>
+    <div class="tbl"><table class="nums"><tbody>
+      <tr><td>Model-only pilot (qwen2.5:7b)</td><td>17 of 30 messages fully correct (57%); 3 invented values</td></tr>
+      <tr><td>Rules + confirmation gate, untuned held-out set</td><td>33 of 39 fully correct (85%), <b>0 wrong or invented values</b>; all 6 misses were omissions, so the guest was simply asked again</td></tr>
+      <tr><td>Development set</td><td>35 of 35, gated in CI on every change to the agent. It was tuned against, so it is a regression suite, not an accuracy claim</td></tr>
+      <tr><td>Live replay</td><td>23 conversations × 3 runs, 114 turns, 0 failures; p95 1.27 s on a later 38-turn replay</td></tr>
+      <tr><td>Local GPU</td><td>NVIDIA DGX Spark (GB10): about 47 tokens/s warm, about 10 s cold start, concurrent requests served one after another. Hence at most one model call per turn, none on yes / no</td></tr>
+      <tr><td>Honest limit</td><td>54 non-booking conversations with zero wrong bookings only bound the rate below about 5.5% (rule of three). A safety claim needs 100+ adversarial trials</td></tr>
+    </tbody></table></div>
+  </section>
+
   <section aria-labelledby="llm">
     <h2 id="llm">Compare with an LLM on your machine</h2>
     <p>The first version let a language model read the booking details. Measured, it filled in values the guest never gave, so the model came out of the booking path. If you run <a href="https://ollama.com">Ollama</a>, this page can ask your local model to read the same conversation and show where it would have guessed. Nothing leaves your computer.</p>
@@ -134,14 +213,6 @@ OLLAMA_ORIGINS="https://kaihuan-huang.github.io" ollama serve</pre>
     <div class="row"><button type="button" id="runTests" class="primary">Run the tests</button><span class="status" id="testSummary"></span></div>
     <div class="tbl" id="testOut"></div>
 
-    <h3 style="margin-top:26px">Measured on the original system</h3>
-    <div class="tbl"><table class="nums"><tbody>
-      <tr><td>LLM-only pilot (qwen2.5:7b)</td><td>17 of 30 messages fully correct (57%), with invented values</td></tr>
-      <tr><td>Rules + confirmation gate</td><td>33 of 39 held-out messages fully correct (85%), <b>0 invented values</b></td></tr>
-      <tr><td>Live replay</td><td>114 turns with 0 failures; p95 latency 1.27 s</td></tr>
-      <tr><td>Guardrails</td><td>Model history capped at 30 minutes; contact and status replies are fixed templates, so the agent can't promise what it can't do</td></tr>
-      <tr><td>Honest limit</td><td>The replay sample is too small to claim a wrong-booking rate below about 5.5% (rule of three)</td></tr>
-    </tbody></table></div>
   </section>
 
   <footer>
