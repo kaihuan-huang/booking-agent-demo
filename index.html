@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booking Agent Demo · Kaihuan Huang</title>
+<meta name="description" content="A bilingual booking agent that never books until the guest says yes and never fills in a value the guest didn't give.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230B5CAD'/%3E%3Cpath d='M9 17l5 5 9-11' stroke='%23FDE68A' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#FFFFFF;--ink:#16191A;--ink-2:#3D4447;--muted:#5F686B;--line:#DFE3E5;--panel:#F4F6F7;
+  --accent:#0B5CAD;--me:#DCEBFA;--me-ink:#0B3F75;--ok:#1E7A45;--ok-bg:#E3F4EA;--bad:#B42318;--bad-bg:#FDECEA;--warn:#8A5A00;--warn-bg:#FFF4D6;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101315;--ink:#E6EAEC;--ink-2:#C2CACD;--muted:#98A2A6;--line:#2A3134;--panel:#181D1F;
+  --accent:#6CB2F5;--me:#16304A;--me-ink:#B9DAFB;--ok:#5BC98A;--ok-bg:#12291D;--bad:#F97066;--bad-bg:#3A1714;--warn:#F5C451;--warn-bg:#33280C;
+}}
+:root[data-theme="dark"]{
+  --bg:#101315;--ink:#E6EAEC;--ink-2:#C2CACD;--muted:#98A2A6;--line:#2A3134;--panel:#181D1F;
+  --accent:#6CB2F5;--me:#16304A;--me-ink:#B9DAFB;--ok:#5BC98A;--ok-bg:#12291D;--bad:#F97066;--bad-bg:#3A1714;--warn:#F5C451;--warn-bg:#33280C;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;padding:48px 16px 64px}
+main{max-width:960px;margin:0 auto}
+h1{font-size:clamp(1.7rem,4vw,2.2rem);line-height:1.2;margin:0;letter-spacing:-.01em}
+h2{font-size:1.15rem;margin:52px 0 10px}
+h3{font-size:.8rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+p{margin:0 0 14px}
+a{color:var(--accent);text-underline-offset:2px}
+code{font-family:var(--mono);font-size:.88em;background:var(--panel);padding:1px 4px;border-radius:3px}
+pre{font-family:var(--mono);font-size:.82rem;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;margin:0 0 12px}
+.dek{font-size:1.1rem;color:var(--ink-2);margin-top:12px}
+.meta{font-size:.85rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:14px;align-items:center}
+.badge{display:inline-block;font-size:.8rem;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--ink-2)}
+.muted{color:var(--muted);font-size:.88rem}
+button,input{font:inherit}
+button{font-size:.88rem;background:transparent;color:var(--ink-2);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button[disabled]{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=text]{font-size:.95rem;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
+.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.layout{grid-template-columns:minmax(0,1fr)}}
+.card{border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.chat{display:flex;flex-direction:column;gap:8px;min-height:260px;max-height:420px;overflow-y:auto;padding:2px}
+.msg{max-width:88%;padding:8px 12px;border-radius:12px;white-space:pre-wrap;word-break:break-word;font-size:.95rem}
+.msg.me{align-self:flex-end;background:var(--me);color:var(--me-ink);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--panel);border-bottom-left-radius:4px}
+.msg.tool{align-self:stretch;max-width:none;font-family:var(--mono);font-size:.78rem;background:var(--ok-bg);color:var(--ok);border-radius:6px}
+.composer{display:flex;gap:8px;margin-top:10px}
+.composer input{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chips button{font-size:.8rem;border-radius:999px;padding:3px 10px}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:6px 8px 6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:.76rem;letter-spacing:.03em}
+td.src{color:var(--muted);font-size:.8rem}
+.empty{color:var(--muted)}
+.pill{display:inline-block;font-size:.76rem;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.side{display:grid;gap:16px;align-content:start}
+#actions code{overflow-wrap:anywhere}
+.tbl code{white-space:nowrap}
+.gate{font-size:.85rem;color:var(--muted);margin-top:8px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.row input{flex:1 1 220px}
+.tbl{overflow-x:auto}
+.nums td:first-child{width:38%;color:var(--ink-2)}
+.status{font-size:.88rem;color:var(--muted);margin-top:8px}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Booking Agent Demo</h1>
+    <p class="dek">A bilingual (English / 中文) restaurant booking agent that never books until the guest says yes, and never fills in a value the guest didn't give.</p>
+    <div class="meta"><span>Kaihuan Huang</span><span class="badge">Independent reimplementation · all data is synthetic</span></div>
+  </header>
+
+  <section aria-labelledby="try">
+    <h2 id="try">Try it</h2>
+    <p class="muted">Rules, not a model, read the date, time, party size and name. Anything unclear becomes a question. The only action, <code>create_reservation</code>, runs after an explicit yes.</p>
+    <div class="layout">
+      <div class="card">
+        <div class="chat" id="chat" aria-live="polite"></div>
+        <form class="composer" id="composer">
+          <input type="text" id="input" autocomplete="off" placeholder="e.g. Table for 4 tomorrow at 7" aria-label="Message">
+          <button type="submit" class="primary">Send</button>
+        </form>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="side">
+        <div class="card">
+          <h3>What the rules found</h3>
+          <table><tbody id="fields"></tbody></table>
+          <p class="gate" id="gate"></p>
+        </div>
+        <div class="card">
+          <h3>Actions taken</h3>
+          <div id="actions" class="empty">None yet.</div>
+        </div>
+        <button type="button" id="reset">Start over</button>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="llm">
+    <h2 id="llm">Compare with an LLM on your machine</h2>
+    <p>The first version let a language model read the booking details. Measured, it filled in values the guest never gave, so the model came out of the booking path. If you run <a href="https://ollama.com">Ollama</a>, this page can ask your local model to read the same conversation and show where it would have guessed. Nothing leaves your computer.</p>
+    <pre><span class="muted"># once, then restart Ollama</span>
+ollama pull qwen2.5:7b
+OLLAMA_ORIGINS="https://kaihuan-huang.github.io" ollama serve</pre>
+    <div class="row">
+      <input type="text" id="endpoint" value="http://localhost:11434" aria-label="Ollama address">
+      <input type="text" id="model" value="qwen2.5:7b" aria-label="Model name">
+      <button type="button" id="ask" class="primary">Ask the local model</button>
+    </div>
+    <p class="muted">Chrome may ask to let this page reach your local network; allow it. The model reads only your messages in the chat above.</p>
+    <div class="tbl" id="llmOut"></div>
+    <p class="status" id="llmStatus"></p>
+
+    <h3 style="margin-top:22px">Sample run on this page's test conversations</h3>
+    <p class="muted">qwen2.5:7b on Ollama, temperature 0, 20 conversations, 25 Sep 2026. In 2 it chose AM or PM on its own when the guest hadn't said; in 1 it put "下周五" (next Friday) on a Tuesday. The rules asked instead, or got the date right.</p>
+  </section>
+
+  <section aria-labelledby="tests">
+    <h2 id="tests">Tests that gate every change</h2>
+    <p class="muted">Every bug fix starts as a failing test. These synthetic conversations run in your browser against the code on this page, with a fixed clock (Fri 25 Sep 2026, 10:00). Each one also checks that no reply promises an email, text or call.</p>
+    <div class="row"><button type="button" id="runTests" class="primary">Run the tests</button><span class="status" id="testSummary"></span></div>
+    <div class="tbl" id="testOut"></div>
+
+    <h3 style="margin-top:26px">Measured on the original system</h3>
+    <div class="tbl"><table class="nums"><tbody>
+      <tr><td>LLM-only pilot (qwen2.5:7b)</td><td>17 of 30 messages fully correct (57%), with invented values</td></tr>
+      <tr><td>Rules + confirmation gate</td><td>33 of 39 held-out messages fully correct (85%), <b>0 invented values</b></td></tr>
+      <tr><td>Live replay</td><td>114 turns with 0 failures; p95 latency 1.27 s</td></tr>
+      <tr><td>Guardrails</td><td>Model history capped at 30 minutes; contact and status replies are fixed templates, so the agent can't promise what it can't do</td></tr>
+      <tr><td>Honest limit</td><td>The replay sample is too small to claim a wrong-booking rate below about 5.5% (rule of three)</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <footer>
+    <a href="https://kaihuan-huang.github.io/pii-detector-demo/">PII Detector Demo</a> · <a href="https://github.com/kaihuan-huang">GitHub</a> · <a href="https://linkedin.com/in/kaihuanhuang/">LinkedIn</a>
+  </footer>
+</main>
+
+<script src="agent.js"></script>
+<script src="evals.js"></script>
+<script>
+(() => {
+  "use strict";
+  const A = BookingAgent;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const EXAMPLES = ["Table for 4 tomorrow at 7", "pm", "I'm Jordan Lee", "yes", "Can you email me the confirmation?", "明天晚上7点，4位，我叫王伟", "下周五中午12点半 两个人 李先生", "确认"];
+  const LABEL = { party: "Party", date: "Date", time: "Time", name: "Name" };
+
+  let state = A.initialState();
+  let userTurns = [];
+  let lastTrace = {};
+  let actions = [];
+
+  function addMsg(cls, html) {
+    const d = document.createElement("div");
+    d.className = `msg ${cls}`;
+    d.innerHTML = html;
+    $("chat").appendChild(d);
+    $("chat").scrollTop = $("chat").scrollHeight;
+  }
+
+  function renderSide() {
+    const f = state.fields;
+    $("fields").innerHTML = Object.keys(LABEL).map((k) => {
+      let v = f[k];
+      if (v && k === "date") v = A.fmtDate(v, "en");
+      else if (v && k === "time") v = A.fmtTime(v, "en");
+      else if (!v && k === "time" && state.ambiguousTime) v = `<span class="pill warn">AM or PM?</span>`;
+      else if (!v && state.rejected[k]) v = `<span class="pill bad">rejected: ${esc(state.rejected[k])}</span>`;
+      const shown = v ? (String(v).startsWith("<span") ? v : esc(v)) : `<span class="empty">not given</span>`;
+      const src = lastTrace[k] ? `from “${esc(lastTrace[k])}”` : "";
+      return `<tr><th scope="row">${LABEL[k]}</th><td>${shown}</td><td class="src">${src}</td></tr>`;
+    }).join("");
+    $("gate").textContent = state.awaitingConfirm
+      ? "Waiting for an explicit yes. Changing any detail asks again."
+      : "Nothing can be booked until all four details are known and the guest says yes.";
+    $("actions").innerHTML = actions.length
+      ? actions.map((a) => `<div><code>${esc(a.name)}(${esc(JSON.stringify(a.args))})</code> → <b>${esc(a.result.confirmation)}</b></div>`).join("")
+      : `<span class="empty">None yet. ${esc(actions.length)} tool calls.</span>`;
+  }
+
+  function send(text) {
+    text = text.trim();
+    if (!text) return;
+    addMsg("me", esc(text));
+    userTurns.push(text);
+    const out = A.step(state, text, new Date());
+    state = out.state;
+    for (const t of out.trace) lastTrace[t.field] = t.from;
+    for (const c of out.toolCalls) {
+      actions.push(c);
+      addMsg("tool", `tool call: ${esc(c.name)}(${esc(JSON.stringify(c.args))})`);
+    }
+    addMsg("bot", esc(out.reply));
+    if (out.toolCalls.length) { lastTrace = {}; }
+    renderSide();
+  }
+
+  function reset() {
+    state = A.initialState(); userTurns = []; lastTrace = {}; actions = [];
+    $("chat").innerHTML = "";
+    addMsg("bot", "Hi! Tell me the date, time, party size and name for your booking. 也可以用中文。");
+    $("llmOut").innerHTML = ""; $("llmStatus").textContent = "";
+    renderSide();
+  }
+
+  $("composer").addEventListener("submit", (e) => { e.preventDefault(); send($("input").value); $("input").value = ""; $("input").focus(); });
+  $("chips").innerHTML = EXAMPLES.map((x, i) => `<button type="button" data-i="${i}">${esc(x)}</button>`).join("");
+  $("chips").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) send(EXAMPLES[Number(b.dataset.i)]); });
+  $("reset").addEventListener("click", reset);
+
+  // ---- local LLM comparison ----
+  const VERDICT_CLASS = (v) => (v.startsWith("matches") || v.startsWith("agree") ? "ok" : v === "missed" ? "warn" : "bad");
+  const VERDICT_TEXT = { "matches rules": "matches", "agree: not given": "both: not given", missed: "missed it", "assumed AM/PM": "chose AM/PM itself", invented: "not in the conversation", "differs from rules": "different value" };
+
+  $("ask").addEventListener("click", async () => {
+    if (!userTurns.length) { $("llmStatus").textContent = "Send a message in the chat first."; return; }
+    const endpoint = $("endpoint").value.replace(/\/+$/, "");
+    const model = $("model").value.trim();
+    $("ask").disabled = true;
+    $("llmStatus").textContent = `Asking ${model}…`;
+    const t0 = performance.now();
+    try {
+      const res = await fetch(`${endpoint}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, messages: A.llmMessages(userTurns, new Date()), stream: false, format: "json", options: { temperature: 0 } }),
+      });
+      if (!res.ok) throw new Error(`Ollama answered ${res.status}. Is "${model}" pulled?`);
+      const data = await res.json();
+      let llm = null;
+      try { llm = JSON.parse(data.message.content); } catch { throw new Error("the model did not return JSON"); }
+      const rows = A.compare(llm, state);
+      const fmt = (k, v) => (v === null ? "—" : k === "date" ? A.fmtDate(v, "en") : k === "time" && /^\d{2}:\d{2}$/.test(v) ? A.fmtTime(v, "en") : String(v));
+      $("llmOut").innerHTML = `<table><thead><tr><th>Field</th><th>Rules</th><th>Local model</th><th></th></tr></thead><tbody>${rows.map((r) =>
+        `<tr><td>${LABEL[r.field]}</td><td>${esc(fmt(r.field, r.rules))}</td><td>${esc(fmt(r.field, r.llm))}</td><td><span class="pill ${VERDICT_CLASS(r.verdict)}">${esc(VERDICT_TEXT[r.verdict] || r.verdict)}</span></td></tr>`).join("")}</tbody></table>`;
+      const bad = rows.filter((r) => VERDICT_CLASS(r.verdict) === "bad").length;
+      $("llmStatus").textContent = `${Math.round(performance.now() - t0)} ms on your machine. ${bad ? `${bad} value${bad > 1 ? "s" : ""} the rules would not have accepted.` : "No disagreements on this conversation. Try “Table for 4 tomorrow at 7”."}`;
+    } catch (err) {
+      const msg = err instanceof TypeError
+        ? `Couldn't reach ${endpoint}. Start Ollama with OLLAMA_ORIGINS set as shown above, and allow local network access if Chrome asks.`
+        : `The local model couldn't answer: ${err.message}`;
+      $("llmStatus").textContent = msg;
+    } finally {
+      $("ask").disabled = false;
+    }
+  });
+
+  // ---- tests ----
+  $("runTests").addEventListener("click", () => {
+    const t0 = performance.now();
+    const results = BookingEvals.run(A);
+    const ms = performance.now() - t0;
+    const passed = results.filter((r) => r.pass).length;
+    $("testSummary").textContent = `${passed} of ${results.length} passed in ${ms.toFixed(1)} ms`;
+    $("testOut").innerHTML = `<table><thead><tr><th></th><th>Case</th><th>Guest says</th><th>Agent's last reply</th></tr></thead><tbody>${results.map((r) =>
+      `<tr><td><span class="pill ${r.pass ? "ok" : "bad"}">${r.pass ? "pass" : "fail"}</span></td><td><code>${esc(r.id)}</code></td><td>${r.turns.map(esc).join("<br>")}</td><td>${esc(r.reply)}${r.pass ? "" : `<br><span class="pill bad">${esc(r.fails.join("; "))}</span>`}</td></tr>`).join("")}</tbody></table>`;
+  });
+
+  reset();
+})();
+</script>
+</body>
+</html>
